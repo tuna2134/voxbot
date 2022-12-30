@@ -3,12 +3,17 @@ use serenity::async_trait;
 use serenity::client::Context;
 use serenity::framework::{
     standard::{
-        macros::{command, group},
-        CommandResult,
+        macros::{command, group, help},
+        CommandResult, Args, HelpOptions,
+        help_commands, CommandGroup,
     },
     StandardFramework,
 };
-use serenity::model::{channel::Message, gateway::Ready};
+use serenity::model::{
+    channel::Message,
+    gateway::{Ready, Activity},
+    id::UserId,
+};
 use serenity::prelude::GatewayIntents;
 use serenity::prelude::*;
 use serenity::Client;
@@ -23,6 +28,7 @@ use std::env;
 use std::fs::{remove_file, File};
 use std::io::Write;
 use std::sync::Arc;
+use std::collections::HashSet;
 
 struct DataState {
     voicevox: VoiceVox,
@@ -40,7 +46,8 @@ async fn main() {
     let intents = GatewayIntents::all();
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("!"))
-        .group(&GENERAL_GROUP);
+        .group(&GENERAL_GROUP)
+        .help(&HELP_COMMAND);
     let mut client = Client::builder(&token, intents)
         .event_handler(Handler)
         .framework(framework)
@@ -98,6 +105,16 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
+#[help]
+async fn help_command(
+    ctx: &Context, msg: &Message, args: Args,
+    help_options: &'static HelpOptions, groups: &[&'static CommandGroup],
+    owners: HashSet<UserId>,
+) -> CommandResult {
+    let _ = help_commands::with_embeds(ctx, msg, args, help_options, groups, owners).await;
+    Ok(())
+}
+
 #[group]
 #[description("汎用コマンド")]
 #[summary("一般")]
@@ -108,8 +125,9 @@ struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
+    async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
+        ctx.set_activity(Activity::playing("読み上げbot起動中")).await;
     }
 
     async fn message(&self, ctx: Context, msg: Message) {
