@@ -65,6 +65,8 @@ async fn main() {
 }
 
 #[command]
+#[description = "読み上げを開始します。"]
+#[only_in(guilds)]
 async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).unwrap();
     let guild_id = guild.id;
@@ -88,6 +90,8 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
+#[description = "読み上げを終了します。"]
+#[only_in(guilds)]
 async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).unwrap();
     let guild_id = guild.id;
