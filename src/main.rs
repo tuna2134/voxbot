@@ -20,13 +20,14 @@ use serenity::Client;
 use songbird::ffmpeg;
 use songbird::input::cached::Memory;
 use songbird::SerenityInit;
+use glob::glob;
 
 mod voicevox;
 use crate::voicevox::VoiceVox;
 
 use std::collections::HashSet;
 use std::env;
-use std::fs::{remove_file, File};
+use std::fs::{File, remove_file};
 use std::io::Write;
 use std::sync::Arc;
 
@@ -41,6 +42,14 @@ impl TypeMapKey for DataState {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    for file_path in glob("audio/*.wav").unwrap() {
+        match file_path {
+            Ok(path) => {
+                remove_file(path).unwrap();
+            },
+            Err(e) => println!("{:?}", e),
+        }
+    }
     let token = env::var("DISCORD_TOKEN").expect("Invalid token");
     let voicevox_api_url = env::var("VOICEVOX_API_URL").expect("Invalid voicevox api url");
     let intents = GatewayIntents::all();
@@ -161,7 +170,6 @@ impl EventHandler for Handler {
                 tts_src.raw.spawn_loader();
                 let mut call_lock = call.lock().await;
                 let _handler = call_lock.play_source(tts_src.try_into().unwrap());
-                remove_file(filename).unwrap();
             }
             None => {
                 return ();
