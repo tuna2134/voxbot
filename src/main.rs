@@ -101,8 +101,7 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
 #[group]
 #[description("汎用コマンド")]
 #[summary("一般")]
-#[commands(join)]
-#[commands(leave)]
+#[commands(join, leave)]
 struct General;
 
 struct Handler;
