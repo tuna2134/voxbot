@@ -158,10 +158,10 @@ impl EventHandler for Handler {
                 let mut file = File::create(filename.clone()).unwrap();
                 file.write_all(&audio).unwrap();
                 let tts_src = Memory::new(ffmpeg(filename.clone()).await.unwrap()).unwrap();
-                remove_file(filename.clone()).unwrap();
                 tts_src.raw.spawn_loader();
                 let mut call_lock = call.lock().await;
                 let _handler = call_lock.play_source(tts_src.try_into().unwrap());
+                remove_file(filename).unwrap();
             }
             None => {
                 return ();
