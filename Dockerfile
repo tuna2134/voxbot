@@ -8,6 +8,5 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 RUN cargo build --release
-COPY ./target/release/ /usr/src/app/target/release/
 
 CMD ["./target/release/voxbot"]
