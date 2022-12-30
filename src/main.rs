@@ -3,15 +3,15 @@ use serenity::async_trait;
 use serenity::client::Context;
 use serenity::framework::{
     standard::{
+        help_commands,
         macros::{command, group, help},
-        CommandResult, Args, HelpOptions,
-        help_commands, CommandGroup,
+        Args, CommandGroup, CommandResult, HelpOptions,
     },
     StandardFramework,
 };
 use serenity::model::{
     channel::Message,
-    gateway::{Ready, Activity},
+    gateway::{Activity, Ready},
     id::UserId,
 };
 use serenity::prelude::GatewayIntents;
@@ -24,11 +24,11 @@ use songbird::SerenityInit;
 mod voicevox;
 use crate::voicevox::VoiceVox;
 
+use std::collections::HashSet;
 use std::env;
 use std::fs::{remove_file, File};
 use std::io::Write;
 use std::sync::Arc;
-use std::collections::HashSet;
 
 struct DataState {
     voicevox: VoiceVox,
@@ -106,9 +106,14 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[help]
+#[individual_command_tip = "ヘルプコマンドだよ！"]
+#[strikethrough_commands_tip_in_guild = ""]
 async fn help_command(
-    ctx: &Context, msg: &Message, args: Args,
-    help_options: &'static HelpOptions, groups: &[&'static CommandGroup],
+    ctx: &Context,
+    msg: &Message,
+    args: Args,
+    help_options: &'static HelpOptions,
+    groups: &[&'static CommandGroup],
     owners: HashSet<UserId>,
 ) -> CommandResult {
     let _ = help_commands::with_embeds(ctx, msg, args, help_options, groups, owners).await;
@@ -127,7 +132,8 @@ struct Handler;
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
-        ctx.set_activity(Activity::playing("読み上げbot起動中")).await;
+        ctx.set_activity(Activity::playing("読み上げbot起動中"))
+            .await;
     }
 
     async fn message(&self, ctx: Context, msg: Message) {
