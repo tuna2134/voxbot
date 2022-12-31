@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use glob::glob;
 use serenity::async_trait;
 use serenity::client::Context;
 use serenity::framework::{
@@ -12,7 +13,7 @@ use serenity::framework::{
 use serenity::model::{
     channel::Message,
     gateway::{Activity, Ready},
-    id::UserId,
+    id::{ChannelId, UserId},
 };
 use serenity::prelude::GatewayIntents;
 use serenity::prelude::*;
@@ -20,23 +21,25 @@ use serenity::Client;
 use songbird::ffmpeg;
 use songbird::input::cached::Memory;
 use songbird::SerenityInit;
-use glob::glob;
 
 mod voicevox;
 use crate::voicevox::VoiceVox;
 
 use std::collections::HashSet;
 use std::env;
-use std::fs::{File, remove_file};
+use std::fs::{remove_file, File};
 use std::io::Write;
 use std::sync::Arc;
 
+use tokio::sync::RwLock;
+
 struct DataState {
     voicevox: VoiceVox,
+    channels: Vec<ChannelId>,
 }
 
 impl TypeMapKey for DataState {
-    type Value = Arc<DataState>;
+    type Value = Arc<RwLock<DataState>>;
 }
 
 #[tokio::main]
@@ -46,7 +49,7 @@ async fn main() {
         match file_path {
             Ok(path) => {
                 remove_file(path).unwrap();
-            },
+            }
             Err(e) => println!("{:?}", e),
         }
     }
@@ -66,9 +69,10 @@ async fn main() {
     {
         let data_state = DataState {
             voicevox: VoiceVox::new(voicevox_api_url),
+            channels: Vec::new(),
         };
         let mut data = client.data.write().await;
-        data.insert::<DataState>(Arc::new(data_state));
+        data.insert::<DataState>(Arc::new(RwLock::new(data_state)));
     }
     client.start().await.expect("Error");
 }
@@ -79,7 +83,6 @@ async fn main() {
 async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).unwrap();
     let guild_id = guild.id;
-
     let channel_id = guild
         .voice_states
         .get(&msg.author.id)
@@ -95,6 +98,14 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let manager = songbird::get(ctx).await.unwrap().clone();
     let _handler = manager.join(guild_id, n_channel_id).await;
     msg.reply(&ctx.http, "接続しました。").await?;
+    let data_lock = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<DataState>().unwrap().clone()
+    };
+    {
+        let mut data_write = data_lock.write().await;
+        data_write.channels.push(msg.channel_id);
+    }
     Ok(())
 }
 
@@ -114,6 +125,14 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
         None => {
             return Ok(());
         }
+    }
+    let data_lock = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<DataState>().unwrap().clone()
+    };
+    {
+        let mut data_write = data_lock.write().await;
+        data_write.channels.retain(|&x| x != msg.channel_id);
     }
     Ok(())
 }
@@ -153,14 +172,18 @@ impl EventHandler for Handler {
         if msg.author.bot {
             return ();
         }
+        let data_read = ctx.data.read().await;
+        let raw_data = data_read.get::<DataState>().unwrap();
+        let data = raw_data.read().await;
+        if !data.channels.contains(&msg.channel_id) {
+            return ();
+        }
         let guild = msg.guild(&ctx.cache).unwrap();
         let guild_id = guild.id;
         let manager = songbird::get(&ctx).await.unwrap();
         let call = manager.get(guild_id);
         match call {
             Some(call) => {
-                let data_read = ctx.data.read().await;
-                let data = data_read.get::<DataState>().unwrap();
                 let audio_query = data.voicevox.get_audio_query(msg.content, 1).await.unwrap();
                 let audio = data.voicevox.synthe(1, audio_query).await.unwrap();
                 let filename = format!("./audio/{}.wav", msg.id);
