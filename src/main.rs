@@ -170,13 +170,13 @@ impl EventHandler for Handler {
 
     async fn message(&self, ctx: Context, msg: Message) {
         if msg.author.bot {
-            return ();
+            return;
         }
         let data_read = ctx.data.read().await;
         let raw_data = data_read.get::<DataState>().unwrap();
         let data = raw_data.read().await;
         if !data.channels.contains(&msg.channel_id) {
-            return ();
+            return;
         }
         let guild = msg.guild(&ctx.cache).unwrap();
         let guild_id = guild.id;
@@ -195,7 +195,7 @@ impl EventHandler for Handler {
                 let _handler = call_lock.play_source(tts_src.try_into().unwrap());
             }
             None => {
-                return ();
+                return;
             }
         }
     }
