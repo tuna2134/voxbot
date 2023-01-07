@@ -1,4 +1,4 @@
-# 読み上げbot
+# Voicevox tts bot
 
 ## 1. Build binary
 
