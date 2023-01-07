@@ -18,11 +18,11 @@ cargo build --release
 Linux
 
 ```sh
-./target/voxbot
+./target/release/voxbot
 ```
 
 Windows
 
 ```sh
-./target/voxbot.exe
+./target/release/voxbot.exe
 ```
