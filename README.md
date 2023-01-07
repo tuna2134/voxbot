@@ -8,7 +8,7 @@ cargo build --release
 
 ## 2. Create dotenv file.
 
-| name             | value                |
+| name             | description          |
 | :---             | :---                 |
 | DISCORD_TOKEN    | Discord bot's token  |
 | VOICEVOX_API_URL | Voicevox engine urls |
