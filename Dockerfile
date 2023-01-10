@@ -1,6 +1,6 @@
-FROM rust:1
+FROM rust:1 AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/build
 
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -8,5 +8,11 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 RUN cargo build --release
+
+FROM scratch
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/build/target/release/voxbot ./
 
 CMD ["./target/release/voxbot"]
