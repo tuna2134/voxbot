@@ -28,3 +28,5 @@ jobs:
           push: true
           tags: |
             ghcr.io/tuna2134/voxbot
+          cache-from: type=registry,ref=user/app:latest
+          cache-to: type=inline
