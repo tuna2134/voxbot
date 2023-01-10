@@ -15,4 +15,5 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/build/target/release/voxbot ./
 
+RUN ls -a
 CMD ["/usr/src/app/voxbot"]
