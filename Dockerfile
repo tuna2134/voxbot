@@ -15,4 +15,4 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/build/target/release/voxbot ./
 
-CMD ["./target/release/voxbot"]
+CMD ["/usr/src/app/voxbot"]
