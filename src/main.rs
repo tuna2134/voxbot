@@ -153,7 +153,7 @@ async fn help_command(
 }
 
 #[group]
-#[description("汎用コマンド")]
+#[description("普通のコマンド")]
 #[summary("一般")]
 #[commands(join, leave)]
 struct General;
