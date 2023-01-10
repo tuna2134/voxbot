@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     cmake
 
 COPY . .
-RUN cargo build --release
+RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM scratch
 
